@@ -1,1 +1,8 @@
-console.log("backEnd start")
+console.log("backEnd start");
+const express = require('express');
+
+const app = express();
+
+app.listen(3000, () => {
+  console.log("application listening.....");
+});
