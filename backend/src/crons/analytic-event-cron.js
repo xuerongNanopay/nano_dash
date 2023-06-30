@@ -1,4 +1,5 @@
 const cron = require('node-cron');
+const axios = require('axios');
 
 const pullAnalyticEvent = () => {
   cron.schedule("0 0 */1 * * *", function () {
