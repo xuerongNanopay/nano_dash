@@ -20,23 +20,69 @@ mongoConnect();
 
 
 new Promise(resolve => setTimeout(resolve, 5000))
-  .then(_ => {
-    // etl(1682913600000, 1688097600000, '2023_05_01', '2023_06_30')
-    // dumpToMongodb(path1);
-    etlToGroupByGatewayToken(path1);
-  })
+.then(_ => {
+  // etl(1682913600000, 1688097600000, '2023_05_01', '2023_06_30')
+  // dumpToMongodb(path1);
+  // etlToGroupByGatewayToken(path1);
+  stageSumary();
+})
+
+const stageSumary = async _ => {
+  const db = getDb();
+  const stages = [
+    'GATEWAY_PAYMENT_REQUEST',
+    'GATEWAY_SERVICE_USER_AGENT',
+    [{$match: { name: {$regex: new RegExp('GATEWAY_SERVICE')} }}, {$count: "total"}, {$project: {"GATEWAY_SERVICE": {$divide: ['$total', 2]}}}],
+    'SCREEN_RESOLUTION',
+    'WINDOW_RESOLUTION',
+    'INIT_BANK_LOGIN_FLOW',
+    // start: may have multiple 
+    'VIEW_LOAD_flinksRoot',
+    // 'VIEW_LOAD_bank_CA_data',
+    'INSTITUTION_SELECTED',
+    'VIEW_LOAD_flinksConnect',
+    // end: may have multiple 
+    'FLINKS_EVT_APP_MOUNTED',
+    'FLINKS_EVT_COMPONENT_LOAD_CREDENTIAL',
+    'FLINKS_EVT_SUBMIT_CREDENTIAL',
+    'UNKNOWN_FLINKS_EVT',
+    'FLINKS_EVT_COMPONENT_LOAD_MFA',
+    'FLINKS_EVT_SUBMIT_MFA',
+    'FLINKS_EVT_COMPONENT_LOAD_ACCOUNT_SELECTION',
+    'FLINKS_EVT_ACCOUNT_SELECTED',
+    'FLINKS_EVT_REDIRECT',
+    'PaymentRequestAgent_',
+    'TokenPutAgent',
+    'PostToWindowAgent',
+    [{$match: { name: {$regex: new RegExp('ONBOARDING_UPDATED')} }}, {$count: "total"}, {$project: {"ONBOARDING_UPDATED": {$divide: ['$total', 2]}}}],
+    'TRANSACTION_CREATED'
+  ]
+
+  for ( let stage of stages ) {
+    let aggregation = [{$match: { name: {$regex: new RegExp(stage)} }},{$count: stage}];
+    if ( typeof stage === 'object' ) {
+      aggregation = stage;
+    }
+
+    let result = await db
+      .collection('analyticEvent')
+      .aggregate(aggregation)
+      .next()
+    console.log(result);
+  }
+}
 
 // data base on the trace Id
 const etlToGroupByGatewayToken = (path) => {
   const db = getDb(); 
   const cache = new Map();
   const fileStream = fs.createReadStream(path);
-
+  
   const rl = readline.createInterface({
     input: fileStream,
     crlfDelay: Infinity
   });
-
+  
   let totalLine = 0;
   let noTraceId = 0;
   let maxSizeArray = 0;
@@ -53,7 +99,7 @@ const etlToGroupByGatewayToken = (path) => {
       if ( cache.get(obj.traceId).length > maxSizeArray ) maxSizeArray = cache.get(obj.traceId).length;
     }
   });
-
+  
   rl.on('close', async () => {
     console.log('Finished reading the file.');
     console.log('totalLine: ' + totalLine);
@@ -85,7 +131,7 @@ const dumpToMongodb = (path) => {
     const inserted = await db.collection('analyticEvent').insertOne(obj);
     // await db.collection('analyticEvent').findOne({_id: inserted.insertedId})
   });
-
+  
   rl.on('close', () => {
     console.log('Finished reading the file.');
     console.log('totalLine: ' + totalLine);
@@ -93,12 +139,12 @@ const dumpToMongodb = (path) => {
 }
 const etl = (fromTime, endTime) => {
   const fileStream = fs.createReadStream(path);
-
+  
   const rl = readline.createInterface({
     input: fileStream,
     crlfDelay: Infinity
   });
-
+  
   let totalLine = 0;
   let totalJson = 0;
   let totalComment = 0;
@@ -111,18 +157,18 @@ const etl = (fromTime, endTime) => {
       var obj = eval('(' + jsonString + ')');
       if ( obj.timestamp < fromTime || obj.timestamp > endTime || !obj.timestamp) return;
       pick++;
-
+      
       fs.appendFileSync(path1, jsonString + '\n');
     } else if ( line.startsWith("// Modified") ) {
-      totalComment++;
-    }
-  });
+    totalComment++;
+  }
+});
 
-  rl.on('close', () => {
-    console.log('Finished reading the file.');
-    console.log('totalLine: ' + totalLine);
-    console.log('totalJson: ' + totalJson);
-    console.log('totalComment ' + totalComment);
-    console.log('pick: ' + pick);
-  });
+rl.on('close', () => {
+  console.log('Finished reading the file.');
+  console.log('totalLine: ' + totalLine);
+  console.log('totalJson: ' + totalJson);
+  console.log('totalComment ' + totalComment);
+  console.log('pick: ' + pick);
+});
 }
