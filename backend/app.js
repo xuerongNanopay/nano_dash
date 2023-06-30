@@ -21,16 +21,16 @@ mongoConnect();
 
 new Promise(resolve => setTimeout(resolve, 5000))
   .then(_ => {
-    // convertData();
     // etl(1682913600000, 1688097600000, '2023_05_01', '2023_06_30')
-    dumpToMongodb(path1);
+    // dumpToMongodb(path1);
+    etlToGroupByGatewayToken(path1);
   })
 
 // data base on the trace Id
-const convertData = _ => {
+const etlToGroupByGatewayToken = (path) => {
   const db = getDb(); 
   const cache = new Map();
-  const fileStream = fs.createReadStream(path2);
+  const fileStream = fs.createReadStream(path);
 
   const rl = readline.createInterface({
     input: fileStream,
@@ -38,8 +38,6 @@ const convertData = _ => {
   });
 
   let totalLine = 0;
-  let totalJson = 0;
-  let totalComment = 0;
   let noTraceId = 0;
   let maxSizeArray = 0;
   rl.on('line', async (line) => {
@@ -59,12 +57,8 @@ const convertData = _ => {
   rl.on('close', async () => {
     console.log('Finished reading the file.');
     console.log('totalLine: ' + totalLine);
-    console.log('totalJson: ' + totalJson);
-    console.log('totalComment ' + totalComment);
     console.log('noTraceId: ' + noTraceId);
-    console.log('cache size: ' + cache.size)
-    console.log('maxSizeArray: ' + maxSizeArray)
-
+    console.log('maxSizeArray: ' + maxSizeArray);
     cache.forEach(async (value, key) => {
       // console.log(key)
       const obj = {
