@@ -23,9 +23,9 @@ new Promise(resolve => setTimeout(resolve, 5000))
 .then(_ => {
   // etl(1682913600000, 1688097600000, path, path1)
   // dumpToMongodb(path1, 'analyticEvent');
-  // etlToGroupByGatewayToken(path1, 'analyticEvent_groupby_traceId');
+  etlToGroupByGatewayToken(path1, 'analyticEvent_groupby_traceId');
   // stageSumary('analyticEvent');
-  stageSummaryAfterGroup('analyticEvent_groupby_traceId');
+  // stageSummaryAfterGroup('analyticEvent_groupby_traceId');
 })
 
 // {awards: {$elemMatch: {award:'National Medal', year:1975}}}
@@ -151,11 +151,71 @@ const etlToGroupByGatewayToken = (path, toCollection) => {
     console.log('noTraceId: ' + noTraceId);
     console.log('maxSizeArray: ' + maxSizeArray);
     cache.forEach(async (value, key) => {
+      const analyticEvents = value.sort((a, b) => a.timestamp - b.timestamp)
+      const len = analyticEvents.length;
+      let eventCount = {};
+      let selectBanks = [];
+      let submitCredential = [];
+      let screenResulation= '';
+      let windowResulation= '';
+      let userType = '';
+      let isBankLogin = false;
+      for ( let i = 0 ; i < len ; i++ ) {
+        const event = analyticEvents[i];
+
+        if ( ! (event.name in eventCount) ) eventCount[event.name] = 1;
+        else eventCount[event.name]++;
+
+        if ( event.name === 'GATEWAY_PAYMENT_REQUEST' ) {
+          userType = event.tags[0];
+        }
+
+        if ( event.name === 'GATEWAY_PAYMENT_REQUEST' ) {
+          userType = event.tags[0];
+        }
+
+        if ( event.name === 'SCREEN_RESOLUTION' ) {
+          screenResulation = event.extra
+        }
+
+        if ( event.name === 'WINDOW_RESOLUTION' ) {
+          windowResulation = event.extra
+        }
+
+        if ( event.name === 'INIT_BANK_LOGIN_FLOW' ) {
+          isBankLogin = true;
+        }
+
+        if ( event.name.indexOf('INSTITUTION_SELECTED') !== -1 ) {
+          selectBanks.push(event.name.substring(0, event.name.indexOf('INSTITUTION_SELECTED')));
+        }
+
+        if ( event.name === 'FLINKS_EVT_SUBMIT_CREDENTIAL' ) {
+          const flinksMessage = event.extra;
+          if ( flinksMessage.indexOf('institution:') !== -1 ) {
+            submitCredential.push(flinksMessage.substring(flinksMessage.indexOf('institution:') + 12, flinksMessage.length-1));
+          }
+        }
+
+      }
+
       const obj = {
         gatewayTokenId: key,
-        associatedAnalyticEvents: value.sort((a, b) => a.timestamp - b.timestamp)
+        analyticEventsCount: len,
+        startTime: analyticEvents[0].createdAt,
+        endTime: analyticEvents[len-1].createdAt,
+        startEvent: analyticEvents[0].name,
+        endEvent: analyticEvents[len-1].name,
+        isBankLogin,
+        selectBanks,
+        submitCredential,
+        screenResulation,
+        windowResulation,
+        userType,
+        eventCount,
+        analyticEvents: analyticEvents
       }
-      const inserted = await db.collection('analyticEvent_groupby_traceId').insertOne(obj);
+      const inserted = await db.collection(toCollection).insertOne(obj);
     })
   });
 }
