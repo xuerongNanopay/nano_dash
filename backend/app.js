@@ -28,8 +28,32 @@ new Promise(resolve => setTimeout(resolve, 5000))
   stageSummaryAfterGroup('analyticEvent_groupby_traceId');
 })
 
-// {awards: {$elemMatch: {award:'National Medal', year:1975}}}
+const graloyUrlBuilder = (from, to, includeRange=15) => {
+  const fromTime = from - includeRange*1000;
+  const toTime = to + includeRange*1000;
+  let fromDate = new Date(fromTime);
+  const toDate = new Date(toTime);
+  console.log(new Date(fromTime));
+  console.log(new Date(toTime));
+  let [fromY, fromMM, fromD, fromH, fromM, fromS] = new Array(7).fill(0);
+  let [toY, toMM, toD, toH, toM, toS] = new Array(7).fill(0);
+  fromY = fromDate.getUTCFullYear();
+  fromMM = fromDate.getUTCMonth()+1;
+  fromD = fromDate.getUTCDate();
+  fromH = fromDate.getUTCHours();
+  fromM = fromDate.getUTCMinutes();
+  fromS = fromDate.getUTCSeconds();
 
+  toY = toDate.getUTCFullYear();
+  toMM = toDate.getUTCMonth()+1;
+  toD = toDate.getUTCDate();
+  toH = toDate.getUTCHours();
+  toM = toDate.getUTCMinutes();
+  toS = toDate.getUTCSeconds();
+
+  return `https://ca-graylog.nanopay.net/search?q=&rangetype=absolute&from=${fromY}-${fromMM}-${fromD}T${fromH}%3A${fromM}%3A${fromS}.000Z&to=${toY}-${toMM}-${toD}T${toH}%3A${toM}%3A${toS}.999Z`;
+}
+//const graylog_url = `https://ca-graylog.nanopay.net/search?q=&rangetype=absolute&from=2023-06-29T22%3A08%3A00.000Z&to=2023-06-29T22%3A09%3A00.053Z`
 const stageSummaryAfterGroup = async (collection) => {
   const db = getDb();
   const stages = [
@@ -154,7 +178,9 @@ const etlToGroupByGatewayToken = (path, toCollection) => {
       const analyticEvents = value.sort((a, b) => a.timestamp - b.timestamp)
       const len = analyticEvents.length;
       let eventCount = {};
+      let firstSelectBank = '';
       let selectBanks = [];
+      let firstSubmitCredentialBank = '';
       let submitCredential = [];
       let screenResulation= '';
       let windowResulation= '';
@@ -187,12 +213,14 @@ const etlToGroupByGatewayToken = (path, toCollection) => {
         }
 
         if ( event.name.indexOf('INSTITUTION_SELECTED') !== -1 ) {
-          selectBanks.push(event.name.substring(0, event.name.indexOf('INSTITUTION_SELECTED')));
+          if ( firstSelectBank === '' ) firstSelectBank = event.name.substring(0, event.name.indexOf('INSTITUTION_SELECTED')-1);
+          selectBanks.push(event.name.substring(0, event.name.indexOf('INSTITUTION_SELECTED')-1));
         }
 
         if ( event.name === 'FLINKS_EVT_SUBMIT_CREDENTIAL' ) {
           const flinksMessage = event.extra;
           if ( flinksMessage.indexOf('institution:') !== -1 ) {
+            if ( firstSubmitCredentialBank === '' ) firstSubmitCredentialBank = flinksMessage.substring(flinksMessage.indexOf('institution:') + 12, flinksMessage.length-1);
             submitCredential.push(flinksMessage.substring(flinksMessage.indexOf('institution:') + 12, flinksMessage.length-1));
           }
         }
@@ -208,12 +236,15 @@ const etlToGroupByGatewayToken = (path, toCollection) => {
         endEvent: analyticEvents[len-1].name,
         isBankLogin,
         selectBanks,
+        firstSelectBank,
         submitCredential,
+        firstSubmitCredentialBank,
         screenResulation,
         windowResulation,
         userType,
         eventCount,
-        analyticEvents: analyticEvents
+        analyticEvents: analyticEvents,
+        grayLogUrl: graloyUrlBuilder(analyticEvents[0].createdAt, analyticEvents[len-1].createdAt)
       }
       const inserted = await db.collection(toCollection).insertOne(obj);
     })
@@ -282,4 +313,4 @@ rl.on('close', () => {
 // analytic events in between
 //{$and: [{$expr: {$gte: [{$size: "$associatedAnalyticEvents"}, 50]}}, {$expr: {$lte: [{$size: "$associatedAnalyticEvents"}, 60]}}]}
 // in one stage but not in other one
-//{$and: [{ associatedAnalyticEvents: {$elemMatch: {name: {$regex: /GATEWAY_PAYMENT_REQUEST/}}}}, {$nor: [{associatedAnalyticEvents: {$elemMatch: {name: {$regex: /GATEWAY_SERVICE_USER_AGENT/}}}}]}]}
+//{$and: [{ analyticEvents: {$elemMatch: {name: {$regex: /ONBOARDING_UPDATED/}}}}, {$nor: [{analyticEvents: {$elemMatch: {name: {$regex: /TRANSACTION_CREATED/}}}}]}]}
