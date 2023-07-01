@@ -221,3 +221,5 @@ rl.on('close', () => {
 //{$expr: {$gt: [{$size: "$associatedAnalyticEvents"}, 60]}}
 // analytic events in between
 //{$and: [{$expr: {$gte: [{$size: "$associatedAnalyticEvents"}, 50]}}, {$expr: {$lte: [{$size: "$associatedAnalyticEvents"}, 60]}}]}
+// in one stage but not in other one
+//{$and: [{ associatedAnalyticEvents: {$elemMatch: {name: {$regex: /GATEWAY_PAYMENT_REQUEST/}}}}, {$nor: [{associatedAnalyticEvents: {$elemMatch: {name: {$regex: /GATEWAY_SERVICE_USER_AGENT/}}}}]}]}
