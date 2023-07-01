@@ -23,9 +23,9 @@ new Promise(resolve => setTimeout(resolve, 5000))
 .then(_ => {
   // etl(1682913600000, 1688097600000, path, path1)
   // dumpToMongodb(path1, 'analyticEvent');
-  etlToGroupByGatewayToken(path1, 'analyticEvent_groupby_traceId');
+  // etlToGroupByGatewayToken(path1, 'analyticEvent_groupby_traceId');
   // stageSumary('analyticEvent');
-  // stageSummaryAfterGroup('analyticEvent_groupby_traceId');
+  stageSummaryAfterGroup('analyticEvent_groupby_traceId');
 })
 
 // {awards: {$elemMatch: {award:'National Medal', year:1975}}}
@@ -62,7 +62,7 @@ const stageSummaryAfterGroup = async (collection) => {
   ]
 
   for ( let stage of stages ) {
-    let aggregation = [{$match: { associatedAnalyticEvents: {$elemMatch: {name: {$regex: new RegExp(stage)}}}}},{$count: stage}];
+    let aggregation = [{$match: { analyticEvents: {$elemMatch: {name: {$regex: new RegExp(stage)}}}}},{$count: stage}];
 
     let result = await db
       .collection(collection)
