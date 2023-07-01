@@ -24,8 +24,53 @@ new Promise(resolve => setTimeout(resolve, 5000))
   // etl(1682913600000, 1688097600000, path, path1)
   // dumpToMongodb(path1, 'analyticEvent');
   // etlToGroupByGatewayToken(path1, 'analyticEvent_groupby_traceId');
-  stageSumary('analyticEvent');
+  // stageSumary('analyticEvent');
+  stageSummaryAfterGroup('analyticEvent_groupby_traceId');
 })
+
+// {awards: {$elemMatch: {award:'National Medal', year:1975}}}
+
+const stageSummaryAfterGroup = async (collection) => {
+  const db = getDb();
+  const stages = [
+    'GATEWAY_PAYMENT_REQUEST',
+    'GATEWAY_SERVICE_USER_AGENT',
+    'GATEWAY_SERVICE',
+    'SCREEN_RESOLUTION',
+    'WINDOW_RESOLUTION',
+    'INIT_BANK_LOGIN_FLOW',
+    // start: may have multiple 
+    'VIEW_LOAD_flinksRoot',
+    // 'VIEW_LOAD_bank_CA_data',
+    'INSTITUTION_SELECTED',
+    'VIEW_LOAD_flinksConnect',
+    // end: may have multiple 
+    'FLINKS_EVT_APP_MOUNTED',
+    'FLINKS_EVT_COMPONENT_LOAD_CREDENTIAL',
+    'FLINKS_EVT_SUBMIT_CREDENTIAL',
+    'UNKNOWN_FLINKS_EVT',
+    'FLINKS_EVT_COMPONENT_LOAD_MFA',
+    'FLINKS_EVT_SUBMIT_MFA',
+    'FLINKS_EVT_COMPONENT_LOAD_ACCOUNT_SELECTION',
+    'FLINKS_EVT_ACCOUNT_SELECTED',
+    'FLINKS_EVT_REDIRECT',
+    'PaymentRequestAgent_',
+    'TokenPutAgent',
+    'PostToWindowAgent',
+    'ONBOARDING_UPDATED',
+    'TRANSACTION_CREATED'
+  ]
+
+  for ( let stage of stages ) {
+    let aggregation = [{$match: { associatedAnalyticEvents: {$elemMatch: {name: {$regex: new RegExp(stage)}}}}},{$count: stage}];
+
+    let result = await db
+      .collection(collection)
+      .aggregate(aggregation)
+      .next()
+    console.log(result);
+  }
+}
 
 const stageSumary = async (collection) => {
   const db = getDb();
@@ -171,3 +216,8 @@ rl.on('close', () => {
   console.log('pick: ' + pick);
 });
 }
+
+// analytic events more than 60
+//{$expr: {$gt: [{$size: "$associatedAnalyticEvents"}, 60]}}
+// analytic events in between
+//{$and: [{$expr: {$gte: [{$size: "$associatedAnalyticEvents"}, 50]}}, {$expr: {$lte: [{$size: "$associatedAnalyticEvents"}, 60]}}]}
