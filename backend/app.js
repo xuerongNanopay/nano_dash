@@ -21,13 +21,13 @@ mongoConnect();
 
 new Promise(resolve => setTimeout(resolve, 5000))
 .then(_ => {
-  // etl(1682913600000, 1688097600000, '2023_05_01', '2023_06_30')
-  // dumpToMongodb(path1);
-  // etlToGroupByGatewayToken(path1);
-  stageSumary();
+  // etl(1682913600000, 1688097600000, path, path1)
+  // dumpToMongodb(path1, 'analyticEvent');
+  // etlToGroupByGatewayToken(path1, 'analyticEvent_groupby_traceId');
+  stageSumary('analyticEvent');
 })
 
-const stageSumary = async _ => {
+const stageSumary = async (collection) => {
   const db = getDb();
   const stages = [
     'GATEWAY_PAYMENT_REQUEST',
@@ -65,7 +65,7 @@ const stageSumary = async _ => {
     }
 
     let result = await db
-      .collection('analyticEvent')
+      .collection(collection)
       .aggregate(aggregation)
       .next()
     console.log(result);
@@ -73,7 +73,7 @@ const stageSumary = async _ => {
 }
 
 // data base on the trace Id
-const etlToGroupByGatewayToken = (path) => {
+const etlToGroupByGatewayToken = (path, toCollection) => {
   const db = getDb(); 
   const cache = new Map();
   const fileStream = fs.createReadStream(path);
@@ -106,7 +106,6 @@ const etlToGroupByGatewayToken = (path) => {
     console.log('noTraceId: ' + noTraceId);
     console.log('maxSizeArray: ' + maxSizeArray);
     cache.forEach(async (value, key) => {
-      // console.log(key)
       const obj = {
         gatewayTokenId: key,
         associatedAnalyticEvents: value.sort((a, b) => a.timestamp - b.timestamp)
@@ -115,7 +114,7 @@ const etlToGroupByGatewayToken = (path) => {
     })
   });
 }
-const dumpToMongodb = (path) => {
+const dumpToMongodb = (path, collection) => {
   const db = getDb(); 
   const fileStream = fs.createReadStream(path);
   const rl = readline.createInterface({
@@ -128,7 +127,7 @@ const dumpToMongodb = (path) => {
     var obj = eval('(' + line + ')');
     var createdAt = new Date(obj.timestamp);
     obj['createdAt'] = createdAt;
-    const inserted = await db.collection('analyticEvent').insertOne(obj);
+    const inserted = await db.collection(collection).insertOne(obj);
     // await db.collection('analyticEvent').findOne({_id: inserted.insertedId})
   });
   
@@ -137,8 +136,8 @@ const dumpToMongodb = (path) => {
     console.log('totalLine: ' + totalLine);
   });
 }
-const etl = (fromTime, endTime) => {
-  const fileStream = fs.createReadStream(path);
+const etl = (fromTime, endTime, sourcePath, destinationPath) => {
+  const fileStream = fs.createReadStream(sourcePath);
   
   const rl = readline.createInterface({
     input: fileStream,
@@ -158,7 +157,7 @@ const etl = (fromTime, endTime) => {
       if ( obj.timestamp < fromTime || obj.timestamp > endTime || !obj.timestamp) return;
       pick++;
       
-      fs.appendFileSync(path1, jsonString + '\n');
+      fs.appendFileSync(destinationPath, jsonString + '\n');
     } else if ( line.startsWith("// Modified") ) {
     totalComment++;
   }
