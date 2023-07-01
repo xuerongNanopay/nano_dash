@@ -26,15 +26,16 @@ new Promise(resolve => setTimeout(resolve, 5000))
   etlToGroupByGatewayToken(path1, 'analyticEvent_groupby_traceId');
   // stageSumary('analyticEvent');
   // stageSummaryAfterGroup('analyticEvent_groupby_traceId');
+  // console.log(graloyUrlBuilder(1682913600000, 1688097600000));
 })
 
-const graloyUrlBuilder = (from, to, includeRange=15) => {
-  const fromTime = from - includeRange*1000;
+const graloyUrlBuilder = (from, to, includeRange=30) => {
   const toTime = to + includeRange*1000;
-  let fromDate = new Date(fromTime);
+  const fromTime = from - includeRange*1000;
+  const fromDate = new Date(fromTime);
   const toDate = new Date(toTime);
-  let [fromY, fromMM, fromD, fromH, fromM, fromS] = new Array(7).fill(0);
-  let [toY, toMM, toD, toH, toM, toS] = new Array(7).fill(0);
+  let [fromY, fromMM, fromD, fromH, fromM, fromS] = new Array(6).fill(0);
+  let [toY, toMM, toD, toH, toM, toS] = new Array(6).fill(0);
   fromY = fromDate.getUTCFullYear();
   fromMM = fromDate.getUTCMonth()+1;
   fromD = fromDate.getUTCDate();
@@ -51,7 +52,7 @@ const graloyUrlBuilder = (from, to, includeRange=15) => {
 
   return `https://ca-graylog.nanopay.net/search?q=&rangetype=absolute&from=${fromY}-${fromMM}-${fromD}T${fromH}%3A${fromM}%3A${fromS}.000Z&to=${toY}-${toMM}-${toD}T${toH}%3A${toM}%3A${toS}.999Z`;
 }
-//const graylog_url = `https://ca-graylog.nanopay.net/search?q=&rangetype=absolute&from=2023-06-29T22%3A08%3A00.000Z&to=2023-06-29T22%3A09%3A00.053Z`
+
 const stageSummaryAfterGroup = async (collection) => {
   const db = getDb();
   const stages = [
@@ -242,7 +243,7 @@ const etlToGroupByGatewayToken = (path, toCollection) => {
         userType,
         eventCount,
         analyticEvents: analyticEvents,
-        grayLogUrl: graloyUrlBuilder(analyticEvents[0].createdAt, analyticEvents[len-1].createdAt)
+        grayLogUrl: graloyUrlBuilder(analyticEvents[0].timestamp, analyticEvents[len-1].timestamp, 20)
       }
       const inserted = await db.collection(toCollection).insertOne(obj);
     })
