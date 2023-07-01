@@ -23,9 +23,9 @@ new Promise(resolve => setTimeout(resolve, 5000))
 .then(_ => {
   // etl(1682913600000, 1688097600000, path, path1)
   // dumpToMongodb(path1, 'analyticEvent');
-  // etlToGroupByGatewayToken(path1, 'analyticEvent_groupby_traceId');
+  etlToGroupByGatewayToken(path1, 'analyticEvent_groupby_traceId');
   // stageSumary('analyticEvent');
-  stageSummaryAfterGroup('analyticEvent_groupby_traceId');
+  // stageSummaryAfterGroup('analyticEvent_groupby_traceId');
 })
 
 const graloyUrlBuilder = (from, to, includeRange=15) => {
@@ -33,8 +33,6 @@ const graloyUrlBuilder = (from, to, includeRange=15) => {
   const toTime = to + includeRange*1000;
   let fromDate = new Date(fromTime);
   const toDate = new Date(toTime);
-  console.log(new Date(fromTime));
-  console.log(new Date(toTime));
   let [fromY, fromMM, fromD, fromH, fromM, fromS] = new Array(7).fill(0);
   let [toY, toMM, toD, toH, toM, toS] = new Array(7).fill(0);
   fromY = fromDate.getUTCFullYear();
