@@ -35,7 +35,11 @@ new Promise(resolve => setTimeout(resolve, 1000))
 const generateReport = async (collection) => {
   console.log("Stage Summary: ");
   await stageSummaryAfterGroup(collection);
-  console.log();
+  console.log('--');
+  await institutionCountAtStage(collection, 'INSTITUTION_SELECTED');
+  console.log('--');
+  await institutionCountDiffBetweenStage(collection, 'INSTITUTION_SELECTED', 'FLINKS_EVT_SUBMIT_CREDENTIAL');
+
 }
 
 
@@ -318,11 +322,46 @@ rl.on('close', () => {
 });
 }
 
-const findSelectedInstitution = async (collection) => {
+const institutionCountDiffBetweenStage = async (collection, s1, s2) => {
   const db = getDb(); 
   const results = await db
     .collection(collection)
-    .
+    .aggregate([
+      diffStageAgg(s1, s2),
+      {
+        $group: {
+          _id: "$firstSelectBank",
+          count: { $count: {}}
+        }
+      },
+      {
+        $sort: {
+          count: -1
+        }
+      }
+    ]).toArray();
+    console.log(results)
+}
+
+const institutionCountAtStage = async (collection, stage) => {
+  const db = getDb(); 
+  const results = await db
+    .collection(collection)
+    .aggregate([
+      {$match: { analyticEvents: {$elemMatch: {name: {$regex: new RegExp(stage)}}}}},
+      {
+        $group: {
+          _id: "$firstSelectBank",
+          count: { $count: {}}
+        }
+      },
+      {
+        $sort: {
+          count: -1
+        }
+      }
+    ]).toArray();
+    console.log(results)
 }
 
 const findDiffStageGroupByCount = async (s1, s2, groupKey) => {
