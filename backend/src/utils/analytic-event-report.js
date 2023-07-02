@@ -70,6 +70,15 @@ const stageSummaryGroupByBank = async (collection, stage) => {
         $sort: {
           total: -1
         }
+      },
+      {
+        $project: {
+          _id: 0,
+          bank: '$_id',
+          personal: '$personal',
+          business: '$business',
+          total: '$total'
+        }
       }
     ]).toArray();
     return result;

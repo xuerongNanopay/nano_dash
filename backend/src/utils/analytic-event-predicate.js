@@ -4,6 +4,7 @@ const excludeEvent = (event) => ({ analyticEvents: {$not: {$elemMatch: {name: {$
 const diffStage = (stage1, stage2) => ({$and: [includeEvent(stage1), excludeEvent(stage2)]})
 const includeEventAgg = (event) => ({$match: includeEvent(event)})
 const diffStageAgg = (stage1, stage2) => ({$match: diffStage(stage1, stage2)})
+//TODO: date query support
 
 
 module.exports ={
