@@ -36,18 +36,50 @@ const DEFAULT_STAGE = [
 ]
 
 const stageSummary = async (collection, stages=DEFAULT_STAGE) => {
-  const ret = [];
-  for ( const stage of stages ) {
-    const result = await collection
-                          .aggregate([
-                            includeEventAgg(stage),
-                            {$count: stage}
-                          ]).next();
-    ret.push(result)
+  try {
+    const ret = [];
+    for ( const stage of stages ) {
+      const result = await collection
+                            .aggregate([
+                              includeEventAgg(stage),
+                              {$count: stage}
+                            ]).next();
+      ret.push(result)
+    }
+    return ret;
+  } catch ( err ) {
+    console.log(err);
+    throw err
   }
-  return ret;
+}
+
+const stageSummaryGroupByBank = async (collection, stage) => {
+  try {
+    const result = await collection
+    .aggregate([
+      includeEventAgg(stage),
+      {
+        $group: {
+          _id: "$firstSelectBank",
+          total: { $count: {} },
+          personal: { $sum: {$cond: [{$eq: ['$userType', 'PERSONAL']}, 1, 0]}},
+          business: { $sum: {$cond: [{$eq: ['$userType', 'BUSINESS']}, 1, 0]}},
+        }
+      },
+      {
+        $sort: {
+          total: -1
+        }
+      }
+    ]).toArray();
+    return result;
+  } catch ( err ) {
+    console.log(err);
+    throw err
+  }
 }
 
 module.exports = {
-  stageSummary
+  stageSummary,
+  stageSummaryGroupByBank
 }
