@@ -1,18 +1,39 @@
+const { parseUTCDateToTimeStamp } = require('./DateTime');
+
 //const includeEvent = (event) => ({ analyticEvents: {$elemMatch: {name: {$regex: new RegExp(event)}}}})
 const includeEvent = (event) => ({ 'analyticEvents.name': {$regex: new RegExp(event)}})
 const excludeEvent = (event) => ({ analyticEvents: {$not: {$elemMatch: {name: {$regex: new RegExp(event)}}}}})
 const diffStage = (stage1, stage2) => ({$and: [includeEvent(stage1), excludeEvent(stage2)]})
 const includeEventAgg = (event) => ({$match: includeEvent(event)})
 const diffStageAgg = (stage1, stage2) => ({$match: diffStage(stage1, stage2)})
-//TODO: date query support
+const eventBefore = (utcDateTimeString) => ({startTime: lteUTCTime(utcDateTimeString)});
+const eventAfter = (utcDateTimeString) => ({startTime: gteUTCTime(utcDateTimeString)})
+const eventIn = (startTimeString, endTimeString) => ({startTime: betweenUTCTime(startTimeString, endTimeString)});
 
+const lteUTCTime = (utcDateTimeString) => (
+  {$lte: new Date(parseUTCDateToTimeStamp(utcDateTimeString))}
+)
+
+const gteUTCTime = (utcDateTimeString) => (
+  {$gte: new Date(parseUTCDateToTimeStamp(utcDateTimeString))}
+)
+
+const betweenUTCTime = (start, end) => (
+  {
+    $lte: new Date(parseUTCDateToTimeStamp(end)),
+    $gte: new Date(parseUTCDateToTimeStamp(start))
+  }
+)
 
 module.exports ={
   includeEvent,
   excludeEvent,
   includeEventAgg,
   diffStage,
-  diffStageAgg
+  diffStageAgg,
+  eventBefore,
+  eventAfter,
+  eventIn
 }
 
 // analytic events more than 60

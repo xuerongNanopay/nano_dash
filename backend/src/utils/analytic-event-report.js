@@ -3,7 +3,10 @@ const {
   excludeEvent,
   includeEventAgg,
   diffStage,
-  diffStageAgg
+  diffStageAgg,
+  eventBefore,
+  eventAfter,
+  eventIn
 } = require('./analytic-event-predicate')
 
 const DEFAULT_STAGE = [
@@ -35,12 +38,15 @@ const DEFAULT_STAGE = [
   'TRANSACTION_CREATED'
 ]
 
-const stageSummary = async (collection, stages=DEFAULT_STAGE) => {
+//{$match: eventAfter('May 01 2023 00:00:00 EDT')},
+const stageSummary = async (collection, dateRange=null, stages=DEFAULT_STAGE) => {
   try {
+    const dateArangeArr = !dateRange ? {$match: {}} : {$match: dateRange};
     const ret = [];
     for ( const stage of stages ) {
       const result = await collection
                             .aggregate([
+                              dateArangeArr,
                               includeEventAgg(stage),
                               {$count: stage}
                             ]).next();
@@ -53,10 +59,12 @@ const stageSummary = async (collection, stages=DEFAULT_STAGE) => {
   }
 }
 
-const stageSummaryGroupByBank = async (collection, stage) => {
+const stageSummaryGroupByBank = async (collection, stage, dateRange=null) => {
   try {
+    const dateArangeArr = !dateRange ? {$match: {}} : {$match: dateRange};
     const result = await collection
     .aggregate([
+      dateArangeArr,
       includeEventAgg(stage),
       {
         $group: {
