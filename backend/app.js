@@ -35,13 +35,55 @@ new Promise(resolve => setTimeout(resolve, 1000))
 const generateReport = async (collection) => {
   console.log("Stage Summary: ");
   await stageSummaryAfterGroup(collection);
+
   console.log('--');
-  await institutionCountAtStage(collection, 'INSTITUTION_SELECTED');
+  await submitCredentialReport(collection);
   console.log('--');
-  await institutionCountDiffBetweenStage(collection, 'INSTITUTION_SELECTED', 'FLINKS_EVT_SUBMIT_CREDENTIAL');
+  await ableToChooseAccountReport(collection);
 
 }
 
+const submitCredentialReport = async (collection) => {
+  console.log('--- reach INSTITUTION_SELECTED but FLINKS_EVT_SUBMIT_CREDENTIAL');
+  const total = await institutionCountAtStage(collection, 'INSTITUTION_SELECTED');
+  const submit = await institutionCountAtStage(collection, 'FLINKS_EVT_SUBMIT_CREDENTIAL');
+
+  const cache = {};
+  for ( let i of total ) {
+    // console.log(i)
+    cache[i._id] = {count: i.count, submit: 0}
+  }
+  for ( let i of submit ) {
+    cache[i._id].submit = i.count
+  }
+  
+  for (const [key, value] of Object.entries(cache)) {
+    // console.log(key + ": " + value.submit + '/' + value.count + ' (' + (value.submit/value.count * 100).toFixed(2) + '%)')
+    const out = key + ',' + value.submit + ',' + value.count + ',' + (value.submit/value.count * 100).toFixed(2) + '%'
+    console.log(out)
+  }
+}
+
+const ableToChooseAccountReport = async (collection) => {
+  console.log('--- reach FLINKS_EVT_SUBMIT_CREDENTIAL but FLINKS_EVT_COMPONENT_LOAD_ACCOUNT_SELECTION');
+  const total = await institutionCountAtStage(collection, 'FLINKS_EVT_SUBMIT_CREDENTIAL');
+  const submit = await institutionCountAtStage(collection, 'FLINKS_EVT_COMPONENT_LOAD_ACCOUNT_SELECTION');;
+
+  const cache = {};
+  for ( let i of total ) {
+    // console.log(i)
+    cache[i._id] = {count: i.count, submit: 0}
+  }
+  for ( let i of submit ) {
+    cache[i._id].submit = i.count
+  }
+  
+  for (const [key, value] of Object.entries(cache)) {
+    // console.log(key + ": " + value.submit + '/' + value.count + ' (' + (value.submit/value.count * 100).toFixed(2) + '%)')
+    const out = key + ',' + value.submit + ',' + value.count + ',' + (value.submit/value.count * 100).toFixed(2) + '%'
+    console.log(out)
+  }
+}
 
 
 const graloyUrlBuilder = (from, to, includeRange=30) => {
@@ -340,7 +382,7 @@ const institutionCountDiffBetweenStage = async (collection, s1, s2) => {
         }
       }
     ]).toArray();
-    console.log(results)
+    return results;
 }
 
 const institutionCountAtStage = async (collection, stage) => {
@@ -361,7 +403,7 @@ const institutionCountAtStage = async (collection, stage) => {
         }
       }
     ]).toArray();
-    console.log(results)
+    return results;
 }
 
 const findDiffStageGroupByCount = async (s1, s2, groupKey) => {
