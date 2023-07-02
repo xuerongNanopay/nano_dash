@@ -19,15 +19,26 @@ mongoConnect();
 // new Date(2023, 4, 1) -> 1682913600000   2023_05_01
 
 
-new Promise(resolve => setTimeout(resolve, 5000))
+new Promise(resolve => setTimeout(resolve, 1000))
 .then(_ => {
   // etl(1682913600000, 1688097600000, path, path1)
   // dumpToMongodb(path1, 'analyticEvent');
-  etlToGroupByGatewayToken(path1, 'analyticEvent_groupby_traceId');
+  // etlToGroupByGatewayToken(path1, 'analyticEvent_groupby_traceId');
   // stageSumary('analyticEvent');
   // stageSummaryAfterGroup('analyticEvent_groupby_traceId');
   // console.log(graloyUrlBuilder(1682913600000, 1688097600000));
+
+  // findDiffStage('ONBOARDING_UPDATED', 'TRANSACTION_CREATED');
+  generateReport('analyticEvent_groupby_traceId');
 })
+
+const generateReport = async (collection) => {
+  console.log("Stage Summary: ");
+  await stageSummaryAfterGroup(collection);
+  console.log();
+}
+
+
 
 const graloyUrlBuilder = (from, to, includeRange=30) => {
   const toTime = to + includeRange*1000;
@@ -90,7 +101,7 @@ const stageSummaryAfterGroup = async (collection) => {
     let result = await db
       .collection(collection)
       .aggregate(aggregation)
-      .next()
+      .toArray();
     console.log(result);
   }
 }
@@ -307,9 +318,54 @@ rl.on('close', () => {
 });
 }
 
+const findSelectedInstitution = async (collection) => {
+  const db = getDb(); 
+  const results = await db
+    .collection(collection)
+    .
+}
+
+const findDiffStageGroupByCount = async (s1, s2, groupKey) => {
+  const db = getDb(); 
+  const results = await db
+    .collection('analyticEvent_groupby_traceId')
+    .aggregate([
+      diffStageAgg(s1, s2),
+      {
+        $group: {
+
+        }
+      }
+    ])
+    .toArray();
+  console.log(results)
+}
+
+const findDiffStage = async (s1, s2) => {
+  const db = getDb(); 
+  const results = await db
+    .collection('analyticEvent_groupby_traceId')
+    .find(diffStage(s1,s2))
+    .toArray();
+  console.log(results)
+}
+
+const diffStageAgg = (s1, s2) => ({$match: diffStage(s1, s2)})
+const diffStage = (s1, s2) => ({$and: [{ analyticEvents: {$elemMatch: {name: {$regex: new RegExp(s1)}}}}, {$nor: [{analyticEvents: {$elemMatch: {name: {$regex: new RegExp(s2)}}}}]}]})
 // analytic events more than 60
 //{$expr: {$gt: [{$size: "$associatedAnalyticEvents"}, 60]}}
 // analytic events in between
 //{$and: [{$expr: {$gte: [{$size: "$associatedAnalyticEvents"}, 50]}}, {$expr: {$lte: [{$size: "$associatedAnalyticEvents"}, 60]}}]}
 // in one stage but not in other one
 //{$and: [{ analyticEvents: {$elemMatch: {name: {$regex: /ONBOARDING_UPDATED/}}}}, {$nor: [{analyticEvents: {$elemMatch: {name: {$regex: /TRANSACTION_CREATED/}}}}]}]}
+//{analyticEvents: {$elemMatch: {name: {$regex: /TRANSACTION_CREATED/}}}}
+//{$and: [{ analyticEvents: {$elemMatch: {name: {$regex: /INSTITUTION_SELECTED/}}}}, {$nor: [{analyticEvents: {$elemMatch: {name: {$regex: /FLINKS_EVT_SUBMIT_CREDENTIAL/}}}}]}, {endEvent: /FLINKS_EVT_COMPONENT_LOAD_CREDENTIAL/}]}
+//  {$and: [{ analyticEvents: {$elemMatch: {name: {$regex: /INSTITUTION_SELECTED/}}}}, {$nor: [{analyticEvents: {$elemMatch: {name: {$regex: /FLINKS_EVT_SUBMIT_CREDENTIAL/}}}}]}, {endEvent: {$not: /FLINKS_EVT_COMPONENT_LOAD_CREDENTIAL/}}]}
+//  {$and: [{ analyticEvents: {$elemMatch: {name: {$regex: /INSTITUTION_SELECTED/}}}}, {$nor: [{analyticEvents: {$elemMatch: {name: {$regex: /FLINKS_EVT_SUBMIT_CREDENTIAL/}}}}]}, {endEvent: /FLINKS_EVT_COMPONENT_LOAD_CREDENTIAL/}]}
+//  {$and: [{ analyticEvents: {$elemMatch: {name: {$regex: /INSTITUTION_SELECTED/}}}}]}  
+// {
+//   _id: "$firstSelectBank",
+//   count: {
+//     $count: {}
+//   }
+// }
