@@ -47,6 +47,13 @@ exports.getStageInstitutionCompareReport = async (req, resp, next) => {
   else resp.status(200).json(result);
 }
 
+exports.getRokenMissingCapability = async (req, resp, next) => {
+  const result = await findDiffTokens(getCollection(), 'ONBOARDING_UPDATED', 'TRANSACTION_CREATED');
+  if ( req.query.format === 'csv' )
+    resp.status(200).send(csvOutputter(result));
+  else resp.status(200).json(result);
+}
+
   // const collection = getDb().collection('analyticEvent_groupby_traceId');
   // console.log(await stageSummary(collection))
 

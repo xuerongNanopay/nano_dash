@@ -107,7 +107,24 @@ const findDiffTokens = async (collection, stage1, stage2, dateRange = null) => {
                         includeEvent(stage1),
                         excludeEvent(stage2)
                       ]
-                    }).toArray()
+                    })
+                    .project(
+                      {
+                        _id: 0,
+                        gatewayTokenId: 1,
+                        startTime: 1,
+                        endTime: 1,
+                        startEvent: 1,
+                        endEvent: 1,
+                        isBankLogin: 1,
+                        firstSelectBank: 1,
+                        firstSubmitCredentialBank: 1,
+                        userType: 1,
+                        screenResulation: 1,
+                        windowResulation: 1,
+                        grayLogUrl: 1
+                      }
+                    ).toArray()
     return results;
   } catch ( err ) {
     console.log(err);

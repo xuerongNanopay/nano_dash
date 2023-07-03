@@ -9,6 +9,7 @@ reportRouter.get('/institutionSelectionReport', reportController.getInstitutionS
 reportRouter.get('/submitCredentialReport', reportController.getSubmitCredentialReport);
 reportRouter.get('/selectedAccountReport', reportController.getAccountSelectedReport);
 reportRouter.get('/stageInstitutionCompareReport', reportController.getStageInstitutionCompareReport);
+reportRouter.get('/tokenMissingCapability', reportController.getRokenMissingCapability)
 
 
 module.exports = reportRouter;
