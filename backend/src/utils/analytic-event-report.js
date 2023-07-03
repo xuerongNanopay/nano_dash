@@ -114,17 +114,20 @@ const findDiffTokens = async (collection, stage1, stage2, dateRange = null) => {
                         gatewayTokenId: 1,
                         startTime: 1,
                         endTime: 1,
-                        startEvent: 1,
-                        endEvent: 1,
                         isBankLogin: 1,
                         firstSelectBank: 1,
                         firstSubmitCredentialBank: 1,
                         userType: 1,
                         screenResulation: 1,
                         windowResulation: 1,
-                        grayLogUrl: 1
+                        grayLogUrl: 1,
+                        analyticEvents: 1
                       }
-                    ).toArray()
+                    )
+                    .sort({
+                      startTime: -1,
+                    })
+                    .toArray()
     return results;
   } catch ( err ) {
     console.log(err);
@@ -143,7 +146,7 @@ const stageInsitutionCompare = async (collection, stage1, stage2, dateRange=null
     })
     postResult.forEach(bankItem => {
       // weird case: set to negative value for notice.
-      if ( ! cache[bankItem.bank] ) cache[bankItem.bank][stage1] = {bank: bankItem.bank, personal: -1, business: -1, total: -1};
+      if ( ! cache[bankItem.bank] ) cache[bankItem.bank] = {[stage1]: {bank: bankItem.bank, personal: -1, business: -1, total: -1}};
       cache[bankItem.bank][stage2] = {...cache[bankItem.bank][stage2], ...bankItem};
     })
     return cache;
@@ -159,13 +162,13 @@ const stageInstitutionCompareReport = async (collection, stage1, stage2, dateRan
 
   for (const [key, value] of Object.entries(stageCompare)) {
     const tmp = {institution: key}
-    tmp[stage1+"-personal"] = value[stage1].persional;
+    tmp[stage1+"-personal"] = value[stage1].personal;
     tmp[stage1+"-business"] = value[stage1].business;
     tmp[stage1+"-total"] = value[stage1].total;
-    tmp[stage2+"-personal"] = value[stage2].persional;
+    tmp[stage2+"-personal"] = value[stage2].personal;
     tmp[stage2+"-business"] = value[stage2].business;
     tmp[stage2+"-total"] = value[stage2].total;
-    tmp.successRate = value[stage2].total/value[stage1].total
+    tmp.successRate = '' + (value[stage2].total/value[stage1].total*100).toFixed(2) + '%'
     result.push(tmp)
   }
   return result;
