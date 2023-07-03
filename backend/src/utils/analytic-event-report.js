@@ -96,7 +96,45 @@ const stageSummaryGroupByBank = async (collection, stage, dateRange=null) => {
   }
 }
 
+//TODO: project
+const findDiffTokens = async (collection, stage1, stage2, dateRange = null) => {
+  try {
+    const results = collection.find({
+                      $and: [
+                        ! dateRange ? {} : dateRange,
+                        includeEvent(stage1),
+                        excludeEvent(stage2)
+                      ]
+                    }).toArray()
+    return results;
+  } catch ( err ) {
+    console.log(err);
+    throw err
+  }
+}
+
+const stageInsitutionCompare = async (collection, stage1, stage2, dateRange=null) => {
+  try {
+    const preResult = await stageSummaryGroupByBank(collection, stage1, dateRange);
+    const postResult = await stageSummaryGroupByBank(collection, stage2, dateRange);
+    const cache = {};
+    console.log(preResult)
+    preResult.forEach(bankItem => {
+      if ( ! (bankItem.bank in cache) ) cache[bankItem.bank] = {s1: bankItem, s2: null};
+    })
+    postResult.forEach(bankItem => {
+      cache[bankItem.bank].s2 = bankItem;
+    })
+    return cache;
+  } catch ( err ) {
+    console.log(err);
+    throw err
+  }
+}
+
 module.exports = {
   stageSummary,
-  stageSummaryGroupByBank
+  stageSummaryGroupByBank,
+  findDiffTokens,
+  stageInsitutionCompare
 }

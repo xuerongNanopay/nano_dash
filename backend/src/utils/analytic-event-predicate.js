@@ -1,7 +1,7 @@
 const { parseUTCDateToTimeStamp } = require('./DateTime');
 
-//const includeEvent = (event) => ({ analyticEvents: {$elemMatch: {name: {$regex: new RegExp(event)}}}})
-const includeEvent = (event) => ({ 'analyticEvents.name': {$regex: new RegExp(event)}})
+const includeEvent = (event) => ({ analyticEvents: {$elemMatch: {name: {$regex: new RegExp(event)}}}})
+// const includeEvent = (event) => ({ 'analyticEvents.name': {$regex: new RegExp(event)}})
 const excludeEvent = (event) => ({ analyticEvents: {$not: {$elemMatch: {name: {$regex: new RegExp(event)}}}}})
 const diffStage = (stage1, stage2) => ({$and: [includeEvent(stage1), excludeEvent(stage2)]})
 const includeEventAgg = (event) => ({$match: includeEvent(event)})
