@@ -1,0 +1,6 @@
+{
+  "watch": ["src"],
+  "ext": ".js",
+  "ignore": [],
+  "exec": "nodemon --exec npm run start"
+}

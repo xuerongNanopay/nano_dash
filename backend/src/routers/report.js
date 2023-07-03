@@ -4,7 +4,25 @@ const reportController = require('../controllers/report')
 
 const reportRouter = express.Router();
 
-reportRouter.get('/submitCredential', reportController.getSubmitCredentialReprot);
-reportRouter.get('/pickAccount', reportController.getAccountPickReport);
+const formatExtractor = ( req, resp, next ) => {
+  const format = req.query.format;
+  switch ( format ) {
+    case 'json':
+      req.format = format;
+      break;
+    case 'csv':
+      req.format = format;
+      break;
+    default:
+      req.format = 'json';
+      break;
+  }
+  next();
+}
+
+reportRouter.get('/stageSummaryReport', [ formatExtractor, reportController.getStageSummaryReport ]);
+reportRouter.get('/submitCredentialReport', formatExtractor, reportController.getSubmitCredentialReport);
+reportRouter.get('/pickAccountReport', formatExtractor, reportController.getAccountPickReport);
+
 
 module.exports = reportRouter;

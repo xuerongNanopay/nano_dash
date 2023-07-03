@@ -38,7 +38,7 @@ const DEFAULT_STAGE = [
   'TRANSACTION_CREATED'
 ]
 
-//{$match: eventAfter('May 01 2023 00:00:00 EDT')},
+//eventAfter('May 01 2023 00:00:00 EDT')
 const stageSummary = async (collection, dateRange=null, stages=DEFAULT_STAGE) => {
   try {
     const dateArangeArr = !dateRange ? {$match: {}} : {$match: dateRange};
@@ -48,7 +48,9 @@ const stageSummary = async (collection, dateRange=null, stages=DEFAULT_STAGE) =>
                             .aggregate([
                               dateArangeArr,
                               includeEventAgg(stage),
-                              {$count: stage}
+                              // {$count: stage},
+                              { $group: { _id: null, total: { $sum: 1 } } },
+                              { $project: { _id: 0, stage: stage, count: "$total" } }
                             ]).next();
       ret.push(result)
     }
