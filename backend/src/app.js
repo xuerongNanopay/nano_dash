@@ -9,15 +9,6 @@ const startApp = async () => {
   } = require('./utils/analytic-event-report');
   await mongoConnect();
 
-  // const collection = getDb().collection('analyticEvent_groupby_traceId');
-  // console.log(await stageSummary(collection))
-
-  // // console.log(await stageSummaryGroupByBank(collection, 'INSTITUTION_SELECTED'))
-
-  // console.log(await stageInsitutionCompare(collection, 'FLINKS_EVT_COMPONENT_LOAD_CREDENTIAL', 'FLINKS_EVT_SUBMIT_CREDENTIAL'));
-
-  // // console.log(await findDiffTokens(collection, 'ONBOARDING_UPDATED', 'TRANSACTION_CREATED'));
-
   const express = require('express');
   const bodyParser = require('body-parser');
   const reportRouter = require('./routers/report');

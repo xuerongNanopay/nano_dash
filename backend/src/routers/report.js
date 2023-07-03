@@ -21,8 +21,9 @@ const formatExtractor = ( req, resp, next ) => {
 }
 
 reportRouter.get('/stageSummaryReport', [ formatExtractor, reportController.getStageSummaryReport ]);
+reportRouter.get('/institutionSelectionReport', reportController.getInstitutionSelectionReport);
 reportRouter.get('/submitCredentialReport', formatExtractor, reportController.getSubmitCredentialReport);
-reportRouter.get('/pickAccountReport', formatExtractor, reportController.getAccountPickReport);
+reportRouter.get('/selectedAccountReport', formatExtractor, reportController.getAccountSelectedReport);
 
 
 module.exports = reportRouter;
