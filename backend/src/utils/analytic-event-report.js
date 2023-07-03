@@ -120,11 +120,13 @@ const stageInsitutionCompare = async (collection, stage1, stage2, dateRange=null
     const preResult = await stageSummaryGroupByBank(collection, stage1, dateRange);
     const postResult = await stageSummaryGroupByBank(collection, stage2, dateRange);
     const cache = {};
-    console.log(preResult)
+
     preResult.forEach(bankItem => {
       if ( ! (bankItem.bank in cache) ) cache[bankItem.bank] = {[stage1]: bankItem, [stage2]: {bank: bankItem.bank, personal: 0, business: 0, total: 0}};
     })
     postResult.forEach(bankItem => {
+      // weird case: set to negative value for notice.
+      if ( ! cache[bankItem.bank] ) cache[bankItem.bank][stage1] = {bank: bankItem.bank, personal: -1, business: -1, total: -1};
       cache[bankItem.bank][stage2] = {...cache[bankItem.bank][stage2], ...bankItem};
     })
     return cache;
