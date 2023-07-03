@@ -3,34 +3,48 @@ const {
   stageSummary,
   stageSummaryGroupByBank,
   findDiffTokens,
-  stageInsitutionCompare
+  stageInstitutionCompareReport
 } = require('../utils/analytic-event-report');
+
+const { csvOutputter } = require('../utils/csv')
 
 const getCollection = _ => {
   return getDb().collection('analyticEvent_groupby_traceId')
 }
 exports.getStageSummaryReport = async (req, resp, next) => {
   const summary = await stageSummary(getCollection());
-  resp.status(200).json(summary);
-  // let output = "stage,count\n";
-  // summary.forEach(s => output += s.stage+','+s.count+'\n');
-  // resp.status(200).send(output)
+  if ( req.query.format === 'csv' )
+    resp.status(200).send(csvOutputter(summary));
+  else resp.status(200).json(summary);
 }
 
 
 exports.getInstitutionSelectionReport = async (req, resp, next) => {
   const result = await stageSummaryGroupByBank(getCollection(), 'FLINKS_EVT_COMPONENT_LOAD_CREDENTIAL');
-  resp.status(200).json(result);
+  if ( req.query.format === 'csv' )
+    resp.status(200).send(csvOutputter(result));
+  else resp.status(200).json(result);
 }
 
 exports.getSubmitCredentialReport = async (req, resp, next) => {
   const result = await stageSummaryGroupByBank(getCollection(), 'FLINKS_EVT_SUBMIT_CREDENTIAL');
-  resp.status(200).json(result);
+  if ( req.query.format === 'csv' )
+    resp.status(200).send(csvOutputter(result));
+  else resp.status(200).json(result);
 }
 
 exports.getAccountSelectedReport = async (req, resp, next) => {
   const result = await stageSummaryGroupByBank(getCollection(), 'FLINKS_EVT_ACCOUNT_SELECTED');
-  resp.status(200).json(result);
+  if ( req.query.format === 'csv' )
+    resp.status(200).send(csvOutputter(result));
+  else resp.status(200).json(result);
+}
+
+exports.getStageInstitutionCompareReport = async (req, resp, next) => {
+  const result = await stageInstitutionCompareReport(getCollection(), 'FLINKS_EVT_COMPONENT_LOAD_CREDENTIAL', 'FLINKS_EVT_ACCOUNT_SELECTED');
+  if ( req.query.format === 'csv' )
+    resp.status(200).send(csvOutputter(result));
+  else resp.status(200).json(result);
 }
 
   // const collection = getDb().collection('analyticEvent_groupby_traceId');

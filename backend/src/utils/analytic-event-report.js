@@ -122,10 +122,10 @@ const stageInsitutionCompare = async (collection, stage1, stage2, dateRange=null
     const cache = {};
     console.log(preResult)
     preResult.forEach(bankItem => {
-      if ( ! (bankItem.bank in cache) ) cache[bankItem.bank] = {s1: bankItem, s2: null};
+      if ( ! (bankItem.bank in cache) ) cache[bankItem.bank] = {[stage1]: bankItem, [stage2]: {bank: bankItem.bank, personal: 0, business: 0, total: 0}};
     })
     postResult.forEach(bankItem => {
-      cache[bankItem.bank].s2 = bankItem;
+      cache[bankItem.bank][stage2] = {...cache[bankItem.bank][stage2], ...bankItem};
     })
     return cache;
   } catch ( err ) {
@@ -134,9 +134,28 @@ const stageInsitutionCompare = async (collection, stage1, stage2, dateRange=null
   }
 }
 
+const stageInstitutionCompareReport = async (collection, stage1, stage2, dateRange=null) => {
+  const stageCompare = await stageInsitutionCompare(collection, stage1, stage2, dateRange);
+  const result = [];
+
+  for (const [key, value] of Object.entries(stageCompare)) {
+    const tmp = {institution: key}
+    tmp[stage1+"-personal"] = value[stage1].persional;
+    tmp[stage1+"-business"] = value[stage1].business;
+    tmp[stage1+"-total"] = value[stage1].total;
+    tmp[stage2+"-personal"] = value[stage2].persional;
+    tmp[stage2+"-business"] = value[stage2].business;
+    tmp[stage2+"-total"] = value[stage2].total;
+    tmp.successRate = value[stage2].total/value[stage1].total
+    result.push(tmp)
+  }
+  return result;
+}
+
 module.exports = {
   stageSummary,
   stageSummaryGroupByBank,
   findDiffTokens,
-  stageInsitutionCompare
+  stageInsitutionCompare,
+  stageInstitutionCompareReport
 }
