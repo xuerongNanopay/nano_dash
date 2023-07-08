@@ -1,7 +1,7 @@
 const axios = require('axios');
 const https = require('https');
 
-exports.digWebAgent = async ({token, daoKey, startUTC, endUTC, url, query}) => {
+exports.digWebAgent = async ({token, url, query}) => {
   const axios_conn = axios.create({
     baseURL: url,
     httpsAgent: new https.Agent({  

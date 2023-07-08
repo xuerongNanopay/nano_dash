@@ -36,29 +36,35 @@ function getUTCDigRange(start, end) {
 
 //startTime and endTime will be treaded as UTC time
 //eg: 2023-06-30T03:00
-function convertToDigRangeFromUTCTime(startTime, endTime) {
+function convertToDigRangeFromUTC(startTime, endTime) {
   const start = new Date(startTime + '+00:00');
   const end = new Date(endTime + '+00:00');
   return [toUTCDigFormat(start), toUTCDigFormat(end)];
 }
 
+function convertToDigRangeFromDefaultTZ(startTime, endTime) {
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  return [toUTCDigFormat(start), toUTCDigFormat(end)];
+}
+
 //The date return by this function is based on UTC of EST/PST(Toronto)
-const getDigTimeRangWithTZToronto = (option) => {
+const getDigTimeRangWithDefaultTZ = (option) => {
   switch(option) {
     case 'thisDay':
-      return getDigRange(startOfToday(), endOfToday());
+      return getUTCDigRange(startOfToday(), endOfToday());
     case 'thisTwoDay':
-      return getDigRange(startOfYesterday(), endOfToday())
+      return getUTCDigRange(startOfYesterday(), endOfToday())
     case 'thisWeek':
-      return getDigRange(startOfWeek(startOfToday()), endOfWeek(startOfToday()));
+      return getUTCDigRange(startOfWeek(startOfToday()), endOfWeek(startOfToday()));
     case 'thisMonth':
-      return getDigRange(startOfMonth(startOfToday()), endOfMonth(startOfToday()));
+      return getUTCDigRange(startOfMonth(startOfToday()), endOfMonth(startOfToday()));
     case 'thisTwoMonth':
-      return getDigRange(subMonths(startOfMonth(startOfToday()), 1), endOfMonth(startOfToday()));
+      return getUTCDigRange(subMonths(startOfMonth(startOfToday()), 1), endOfMonth(startOfToday()));
     case 'thisQuarter':
-      return getDigRange(startOfQuarter(startOfToday()), endOfQuarter(startOfToday()));
+      return getUTCDigRange(startOfQuarter(startOfToday()), endOfQuarter(startOfToday()));
     case 'thisYear':
-      return getDigRange(startOfYear(startOfToday()), endOfYear(startOfToday()));
+      return getUTCDigRange(startOfYear(startOfToday()), endOfYear(startOfToday()));
     default:
       const [startTime, endTime] = option.split("/");
       //TODO: health check.
@@ -66,10 +72,11 @@ const getDigTimeRangWithTZToronto = (option) => {
     }
 }
 
-// getDigTimeRangWithTZToronto('2023-06-30T00:00/2023-06-30T04:00');
+// getDigTimeRangWithDefaultTZ('2023-06-30T00:00/2023-06-30T04:00');
 // console.log(convertToDigRangeFromUTCTime('2023-06-30T03:41', '2023-06-30T04:00'));
 
 module.exports = {
-  getDigTimeRangWithTZToronto,
-  convertToDigRangeFromUTCTime
+  getDigTimeRangWithDefaultTZ,
+  convertToDigRangeFromUTC,
+  convertToDigRangeFromDefaultTZ
 }
