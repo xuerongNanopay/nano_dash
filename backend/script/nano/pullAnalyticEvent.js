@@ -30,14 +30,14 @@ const pullAnalyticEvent = async ({ token, startT, endT, isUTC=true}) => {
   );
 }
 
-// pullAnalyticEvent(
-//   {
-//     token,
-//     startT,
-//     endT,
-//     timeZone
-//   }
-// )
-// .then(resp => console.log(resp.data))
-// .catch(err => console.log(err))
+pullAnalyticEvent(
+  {
+    token,
+    startT,
+    endT,
+    timeZone
+  }
+)
+.then(resp => console.log(resp.data))
+.catch(err => console.log(err))
 
