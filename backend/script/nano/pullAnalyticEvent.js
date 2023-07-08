@@ -8,7 +8,8 @@ const startT = process.argv[3].replace('T', ' ');
 const endT = process.argv[4].replace('T', ' ');
 const timeZone = process.argv[5] || 'Etc/Greenwich';
 
-const pullAnalyticEvent = async ({ token, startT, endT, timeZone}) => {
+//endT not include.
+const pullAnalyticEvent = async ({ token, startT, endT, timeZone='Etc/Greenwich'}) => {
   const start = moment.tz(startT, timeZone);
   const end = moment.tz(endT, timeZone);
 
