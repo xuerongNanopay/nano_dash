@@ -15,13 +15,14 @@ const pullAnalyticEvent = async (token, startT, endT, isUTC=true) => {
   const url = "https://ca-prod-mediator1.nanopay.net:8443";
   const query = `service/dig?dao=analyticEventDAO&cmd=select&format=json&q=timestamp%3E%3D${digStart}%20AND%20timestamp%3C${digEnd}`;
   console.log(query)
-  return await digWebAgent(
+  const resp = await digWebAgent(
     {
       token,
       url,
       query
     }
-  );
+  )
+  return resp.data;
 }
 
 module.exports = {
