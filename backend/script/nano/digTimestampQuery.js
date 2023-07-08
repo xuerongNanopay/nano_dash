@@ -13,16 +13,9 @@ const {
   startOfYear,
   endOfYear,
   addMinutes,
-  subMonths,
-  subDays,
-  subWeeks,
-  parseISO
+  subMinutes,
+  subMonths
 } = require('date-fns');
-
-const winDate = new Date('2023-06-30T03:00' + '+00:00')
-console.log(format(winDate, "yyyy-MM-dd'T'HH'%3A'mm"))
-console.log(formatInTimeZone(winDate, 'Etc/Greenwich', "yyyy-MM-dd'T'HH'%3A'mm"))
-console.log('---')
 
 const _digTimeFormat = "yyyy-MM-dd'T'HH'%3A'mm";
 function toUTCDigFormat(date) {
@@ -30,8 +23,8 @@ function toUTCDigFormat(date) {
 }
 
 function getUTCDigRange(start, end) {
-  console.log(start, end)
-  return [toUTCDigFormat(start), toUTCDigFormat(addMinutes(end, 1))];
+  console.log('aa', start, end)
+  return [toUTCDigFormat(subMinutes(start, 1)), toUTCDigFormat(addMinutes(end, 1))];
 }
 
 //startTime and endTime will be treaded as UTC time
@@ -39,13 +32,13 @@ function getUTCDigRange(start, end) {
 function convertToDigRangeFromUTC(startTime, endTime) {
   const start = new Date(startTime + '+00:00');
   const end = new Date(endTime + '+00:00');
-  return [toUTCDigFormat(start), toUTCDigFormat(end)];
+  return [toUTCDigFormat(subMinutes(start, 1)), toUTCDigFormat(end)];
 }
 
 function convertToDigRangeFromDefaultTZ(startTime, endTime) {
   const start = new Date(startTime);
   const end = new Date(endTime);
-  return [toUTCDigFormat(start), toUTCDigFormat(end)];
+  return [toUTCDigFormat(subMinutes(start, 1)), toUTCDigFormat(end)];
 }
 
 //The date return by this function is based on UTC of EST/PST(Toronto)

@@ -2,16 +2,10 @@
 const { convertToDigRangeFromUTC, convertToDigRangeFromDefaultTZ} = require('./digTimestampQuery');
 const { digWebAgent } = require('./pullDAO')
 
-const token = process.argv[2];
-const startT = process.argv[3];
-const endT = process.argv[4];
-const timeZone = process.argv[5] || 'UTC';
-
 //endT not include.
-const pullAnalyticEvent = async ({ token, startT, endT, isUTC=true}) => {
+const pullAnalyticEvent = async (token, startT, endT, isUTC=true) => {
   let digStart;
   let digEnd;
-
   if ( isUTC ) {
     [digStart, digEnd] = convertToDigRangeFromUTC(startT, endT);
   } else {
@@ -30,14 +24,7 @@ const pullAnalyticEvent = async ({ token, startT, endT, isUTC=true}) => {
   );
 }
 
-pullAnalyticEvent(
-  {
-    token,
-    startT,
-    endT,
-    timeZone
-  }
-)
-.then(resp => console.log(resp.data))
-.catch(err => console.log(err))
+module.exports = {
+  pullAnalyticEvent
+}
 
