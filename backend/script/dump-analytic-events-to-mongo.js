@@ -12,7 +12,7 @@ const dump = async (token, start, end) => {
     e.timestamp = formattedDate.getTime();
     e.createdAt = formattedDate;
     await populateAnalyticEvent(db, e);
-    await populateAnalyticEventGroupbyTraceId(db, e);
+    await populateGatewayToken(db, e);
   }
 
   mongoDisconnect();
@@ -31,6 +31,24 @@ async function populateAnalyticEvent(db, event) {
     {upsert: true}
   )
   console.log(result)
+}
+
+async function populateGatewayToken(db, event) {
+  const token = await db.collection('analyticEvent_groupby_traceId').findOne({gatewayTokenId: event.traceId});
+  if ( token && isEventExist(token, event) ) return;
+  let updateToken;
+  if ( ! token ) {
+    updateToken = createGatewayToken(event);
+  } else {
+    updateToken = appendGatewayToken(token, event);
+  }
+
+  populateFieldsForGatewayToken(updateToken);
+
+  const result = await db
+    .collection('analyticEvent_groupby_traceId')
+    .replaceOne({gatewayTokenId: updateToken.gatewayTokenId}, updateToken);
+  console.log('populateGatewayToken', result);
 }
 
 
@@ -118,8 +136,8 @@ function appendGatewayToken(token, event) {
 }
 
 function isEventExist(token, event) {
-  const event = token.analyticEvents.find(e => e.id === event.id);
-  return !!event;
+  const e = token.analyticEvents.find(e => e.id === event.id);
+  return !!e;
 }
 
 function createGatewayToken(event) {
@@ -127,11 +145,6 @@ function createGatewayToken(event) {
     gatewayTokenId: event.name,
     analyticEvents: [event],
   }
-}
-
-async function populateGatewayToken(db, event) {
-  const token = db.collection('analyticEvent_groupby_traceId').find({gatewayTokenId: event.traceId});
-  if ( token && isEventExist(token, event) ) return;
 }
 
 const graloyUrlBuilder = (from, to, includeRange=30) => {
