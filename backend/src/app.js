@@ -1,12 +1,6 @@
 const startApp = async () => {
   console.log('Nano Dash App');
-  const { getDb, mongoConnect } = require('./utils/mongodb');
-  const { 
-    stageSummary,
-    stageSummaryGroupByBank,
-    findDiffTokens,
-    stageInsitutionCompare
-  } = require('./utils/analytic-event-report');
+  const { mongoConnect } = require('./utils/mongodb');
   await mongoConnect();
 
   const express = require('express');
