@@ -1,6 +1,9 @@
 const { getDb, mongoConnect, mongoDisconnect } = require('../src/utils/mongodb')
 const { pullAnalyticEvent } = require('./nano/pullAnalyticEvent');
 
+const COLLECTION_ANALYTIC_EVENT = 'analyticEvent_test';
+const COLLECTION_GATEWAY_TOKEN = 'gatewayToken_test';
+
 const dump = async (token, start, end) => {
   console.log('========Dump Analytic Event To Mongo========');
   await mongoConnect();
@@ -29,7 +32,7 @@ const dump = async (token, start, end) => {
 
 async function populateAnalyticEvent(db, event) {
   const result = await db
-  .collection('analyticEvent')
+  .collection(COLLECTION_ANALYTIC_EVENT)
   .updateOne(
     {
       id: event.id
@@ -43,8 +46,8 @@ async function populateAnalyticEvent(db, event) {
 }
 
 async function populateGatewayToken(db, event) {
-  const token = await db.collection('analyticEvent_groupby_traceId').findOne({gatewayTokenId: event.traceId});
-  if ( token && isEventExist(token, event) ) return [0, 0];
+  const token = await db.collection(COLLECTION_GATEWAY_TOKEN).findOne({gatewayTokenId: event.traceId});
+  if ( token && isEventExistInToken(token, event) ) return [0, 0];
   let updateToken;
   if ( ! token ) {
     updateToken = createGatewayToken(event);
@@ -55,7 +58,7 @@ async function populateGatewayToken(db, event) {
   updateToken = populateFieldsForGatewayToken(updateToken);
 
   const result = await db
-    .collection('analyticEvent_groupby_traceId')
+    .collection(COLLECTION_GATEWAY_TOKEN)
     .replaceOne(
       {gatewayTokenId: updateToken.gatewayTokenId}, 
       updateToken,
@@ -79,10 +82,8 @@ function populateFieldsForGatewayToken(gatewayToken) {
   let userType = '';
   let isBankLogin = false;
   let onboardType = '';
-  
   for ( let i = 0 ; i < len ; i++ ) {
     const event = analyticEvents[i];
-
     if ( ! (event.name in eventCount) ) eventCount[event.name] = 1;
     else eventCount[event.name]++;
 
@@ -119,27 +120,26 @@ function populateFieldsForGatewayToken(gatewayToken) {
         submitCredential.push(flinksMessage.substring(flinksMessage.indexOf('institution:') + 12, flinksMessage.length-1));
       }
     }
-
-    return {
-      ...gatewayToken,
-      analyticEventsCount: len,
-      startTime: analyticEvents[0].createdAt,
-      endTime: analyticEvents[len-1].createdAt,
-      startEvent: analyticEvents[0].name,
-      endEvent: analyticEvents[len-1].name,
-      isBankLogin,
-      selectBanks,
-      firstSelectBank,
-      submitCredential,
-      firstSubmitCredentialBank,
-      screenResulation,
-      windowResulation,
-      userType,
-      onboardType,
-      eventCount,
-      analyticEvents: analyticEvents,
-      grayLogUrl: graloyUrlBuilder(analyticEvents[0].timestamp, analyticEvents[len-1].timestamp, 20)
-    }
+  }
+  return {
+    ...gatewayToken,
+    analyticEventsCount: len,
+    startTime: analyticEvents[0].createdAt,
+    endTime: analyticEvents[len-1].createdAt,
+    startEvent: analyticEvents[0].name,
+    endEvent: analyticEvents[len-1].name,
+    isBankLogin: isBankLogin,
+    selectBanks: selectBanks,
+    firstSelectBank: firstSelectBank,
+    submitCredential: submitCredential,
+    firstSubmitCredentialBank: firstSubmitCredentialBank,
+    screenResulation: screenResulation,
+    windowResulation: windowResulation,
+    userType: userType,
+    onboardType: onboardType,
+    eventCount: eventCount,
+    analyticEvents: analyticEvents,
+    grayLogUrl: graloyUrlBuilder(analyticEvents[0].timestamp, analyticEvents[len-1].timestamp, 20)
   }
 }
 
@@ -148,7 +148,7 @@ function appendGatewayToken(token, event) {
   return token;
 }
 
-function isEventExist(token, event) {
+function isEventExistInToken(token, event) {
   const e = token.analyticEvents.find(e => e.id === event.id);
   return !!e;
 }
