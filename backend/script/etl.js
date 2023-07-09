@@ -113,6 +113,7 @@ const etlToGroupByGatewayToken = (path, toCollection) => {
       let windowResulation= '';
       let userType = '';
       let isBankLogin = false;
+      let onboardType = ''
       for ( let i = 0 ; i < len ; i++ ) {
         const event = analyticEvents[i];
 
@@ -135,8 +136,9 @@ const etlToGroupByGatewayToken = (path, toCollection) => {
           windowResulation = event.extra
         }
 
-        if ( event.name === 'INIT_BANK_LOGIN_FLOW' ) {
+        if ( event.name === 'INIT_BANK_LOGIN_FLOW' || event.name === 'INIT_CHEQUE_FLOW' ) {
           isBankLogin = true;
+          onboardType = event.name === 'INIT_BANK_LOGIN_FLOW' ? 'Flinks' : 'VC';
         }
 
         if ( event.name.indexOf('INSTITUTION_SELECTED') !== -1 ) {
@@ -169,6 +171,7 @@ const etlToGroupByGatewayToken = (path, toCollection) => {
         screenResulation,
         windowResulation,
         userType,
+        onboardType,
         eventCount,
         analyticEvents: analyticEvents,
         grayLogUrl: graloyUrlBuilder(analyticEvents[0].timestamp, analyticEvents[len-1].timestamp, 20)
