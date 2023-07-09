@@ -1,8 +1,8 @@
 const { getDb, mongoConnect, mongoDisconnect } = require('../src/utils/mongodb')
 const { pullAnalyticEvent } = require('./nano/pullAnalyticEvent');
 
-const COLLECTION_ANALYTIC_EVENT = 'analyticEvent_test';
-const COLLECTION_GATEWAY_TOKEN = 'gatewayToken_test';
+const COLLECTION_ANALYTIC_EVENT = (posfix) => 'analytic_events_'+posfix;
+const COLLECTION_GATEWAY_TOKEN = (posfix) => 'gateway_tokens_'+posfix;
 
 const dump = async (token, start, end) => {
   console.log('========Dump Analytic Event To Mongo========');
@@ -18,8 +18,8 @@ const dump = async (token, start, end) => {
     const formattedDate = new Date(e.timestamp.replace('Z', '+00:00'));
     e.timestamp = formattedDate.getTime();
     e.createdAt = formattedDate;
-    insertAnalyticEventCount += await populateAnalyticEvent(db, e);
-    const [insert, update] = await populateGatewayToken(db, e);
+    insertAnalyticEventCount += await populateAnalyticEvent(db, e, COLLECTION_ANALYTIC_EVENT(start+'-'+end));
+    const [insert, update] = await populateGatewayToken(db, e, COLLECTION_GATEWAY_TOKEN(start+'-'+end));
     insertGatewayTokenCount += insert;
     updateGatewayTokenCount += update;
   }
@@ -30,9 +30,9 @@ const dump = async (token, start, end) => {
   mongoDisconnect();
 }
 
-async function populateAnalyticEvent(db, event) {
+async function populateAnalyticEvent(db, event, collection='analytic_events') {
   const result = await db
-  .collection(COLLECTION_ANALYTIC_EVENT)
+  .collection(collection)
   .updateOne(
     {
       id: event.id
@@ -45,8 +45,8 @@ async function populateAnalyticEvent(db, event) {
   return result.upsertedCount;
 }
 
-async function populateGatewayToken(db, event) {
-  const token = await db.collection(COLLECTION_GATEWAY_TOKEN).findOne({gatewayTokenId: event.traceId});
+async function populateGatewayToken(db, event, collection='gateway_tokens') {
+  const token = await db.collection(collection).findOne({gatewayTokenId: event.traceId});
   if ( token && isEventExistInToken(token, event) ) return [0, 0];
   let updateToken;
   if ( ! token ) {
@@ -58,7 +58,7 @@ async function populateGatewayToken(db, event) {
   updateToken = populateFieldsForGatewayToken(updateToken);
 
   const result = await db
-    .collection(COLLECTION_GATEWAY_TOKEN)
+    .collection(collection)
     .replaceOne(
       {gatewayTokenId: updateToken.gatewayTokenId}, 
       updateToken,
