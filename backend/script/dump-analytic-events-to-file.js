@@ -22,12 +22,9 @@ const dumpAnalyticEventToFile = async (token, start, end) => {
   }
 }
 
-
+//node dump-analytic-events-to-file.js token 2023-06-30T03:31 2023-06-30T03:32
 const token = process.argv[2];
 const startT = process.argv[3];
 const endT = process.argv[4];
-
-//2023-06-30T03:41
-//2023-07-08T23:00
 
 dumpAnalyticEventToFile(token, startT, endT);
