@@ -7,14 +7,23 @@ const dump = async (token, start, end) => {
   const db = getDb();
 
   const events = await pullAnalyticEvent(token, start, end);
+  console.log("Analytic Event Size: " + events.length);
+  let insertAnalyticEventCount = 0;
+  let insertGatewayTokenCount = 0;
+  let updateGatewayTokenCount = 0;
   for ( const e of events ) {
     const formattedDate = new Date(e.timestamp.replace('Z', '+00:00'));
     e.timestamp = formattedDate.getTime();
     e.createdAt = formattedDate;
-    await populateAnalyticEvent(db, e);
-    await populateGatewayToken(db, e);
+    insertAnalyticEventCount += await populateAnalyticEvent(db, e);
+    const [insert, update] = await populateGatewayToken(db, e);
+    insertGatewayTokenCount += insert;
+    updateGatewayTokenCount += update;
   }
 
+  console.log("Insert Analytic Event: " + insertAnalyticEventCount);
+  console.log("Insert GateWay Token: " + insertGatewayTokenCount);
+  console.log("Update GateWay Token: " + updateGatewayTokenCount);
   mongoDisconnect();
 }
 
@@ -23,19 +32,19 @@ async function populateAnalyticEvent(db, event) {
   .collection('analyticEvent')
   .updateOne(
     {
-      id: e.id
+      id: event.id
     },
     {
-      $setOnInsert: e
+      $setOnInsert: event
     },
     {upsert: true}
   )
-  console.log(result)
+  return result.upsertedCount;
 }
 
 async function populateGatewayToken(db, event) {
   const token = await db.collection('analyticEvent_groupby_traceId').findOne({gatewayTokenId: event.traceId});
-  if ( token && isEventExist(token, event) ) return;
+  if ( token && isEventExist(token, event) ) return [0, 0];
   let updateToken;
   if ( ! token ) {
     updateToken = createGatewayToken(event);
@@ -43,12 +52,16 @@ async function populateGatewayToken(db, event) {
     updateToken = appendGatewayToken(token, event);
   }
 
-  populateFieldsForGatewayToken(updateToken);
+  updateToken = populateFieldsForGatewayToken(updateToken);
 
   const result = await db
     .collection('analyticEvent_groupby_traceId')
-    .replaceOne({gatewayTokenId: updateToken.gatewayTokenId}, updateToken);
-  console.log('populateGatewayToken', result);
+    .replaceOne(
+      {gatewayTokenId: updateToken.gatewayTokenId}, 
+      updateToken,
+      {upsert: true}
+    );
+  return [result.upsertedCount, result.modifiedCount];
 }
 
 
@@ -141,8 +154,8 @@ function isEventExist(token, event) {
 }
 
 function createGatewayToken(event) {
-  return token = {
-    gatewayTokenId: event.name,
+  return {
+    gatewayTokenId: event.traceId,
     analyticEvents: [event],
   }
 }
