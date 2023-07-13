@@ -1,6 +1,6 @@
 //: node pullAnalyticEvent.js yourToken 2023-11-18T00:00 2023-06-18T00:00 America/Toronto
 const { convertToDigRangeFromUTC, convertToDigRangeFromDefaultTZ} = require('./digTimestampQuery');
-const { digWebAgent } = require('./pullDAO')
+const { digWebAgent } = require('./digWebAgent');
 
 //endT not include.
 const pullAnalyticEvent = async (token, startT, endT, isUTC=true) => {
