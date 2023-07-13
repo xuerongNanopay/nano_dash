@@ -4,7 +4,7 @@ const { pullAnalyticEvent } = require('./nano/pullAnalyticEvent');
 const COLLECTION_ANALYTIC_EVENT = (posfix) => 'analytic_events_'+posfix;
 const COLLECTION_GATEWAY_TOKEN = (posfix) => 'gateway_tokens_'+posfix;
 
-const dump = async (url, token, start, end) => {
+const dumpAnalyticEventsToMongo = async (url, token, start, end) => {
   console.log('========Dump Analytic Event To Mongo========');
   await mongoConnect();
   const db = getDb();
@@ -184,9 +184,6 @@ const graloyUrlBuilder = (from, to, includeRange=30) => {
   return `https://ca-graylog.nanopay.net/search?q=&rangetype=absolute&from=${fromY}-${fromMM}-${fromD}T${fromH}%3A${fromM}%3A${fromS}.000Z&to=${toY}-${toMM}-${toD}T${toH}%3A${toM}%3A${toS}.999Z`;
 }
 
-//node dump-analytic-events-to-mongo.js url token 2023-06-30T03:31 2023-06-30T03:32
-const url = process.argv[2];
-const token = process.argv[3];
-const startT = process.argv[4];
-const endT = process.argv[5];
-dump(url, token, startT, endT);
+module.exports = {
+  dumpAnalyticEventsToMongo
+}
