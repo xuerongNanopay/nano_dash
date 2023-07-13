@@ -189,4 +189,4 @@ const url = process.argv[2];
 const token = process.argv[3];
 const startT = process.argv[4];
 const endT = process.argv[5];
-dump(token, startT, endT);
+dump(url, token, startT, endT);
