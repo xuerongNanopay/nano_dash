@@ -2,7 +2,7 @@ const { getDb, mongoConnect, mongoDisconnect } = require('../src/utils/mongodb')
 const { pullAnalyticEvent } = require('./nano/pullAnalyticEvent');
 
 const COLLECTION_ANALYTIC_EVENT = (posfix) => 'analytic_events_'+posfix;
-const COLLECTION_GATEWAY_TOKEN = (posfix) => 'gateway_tokens_'+posfix;
+const COLLECTION_GATEWAY_TOKEN_AGGREGATE = (posfix) => 'gateway_tokens_aggregate_'+posfix;
 
 const dumpAnalyticEventsToMongo = async (url, token, start, end) => {
   console.log('========Dump Analytic Event To Mongo========');
@@ -19,7 +19,7 @@ const dumpAnalyticEventsToMongo = async (url, token, start, end) => {
     e.timestamp = formattedDate.getTime();
     e.createdAt = formattedDate;
     insertAnalyticEventCount += await populateAnalyticEvent(db, e, COLLECTION_ANALYTIC_EVENT(start+'-'+end));
-    const [insert, update] = await populateGatewayToken(db, e, COLLECTION_GATEWAY_TOKEN(start+'-'+end));
+    const [insert, update] = await populateGatewayToken(db, e, COLLECTION_GATEWAY_TOKEN_AGGREGATE(start+'-'+end));
     insertGatewayTokenCount += insert;
     updateGatewayTokenCount += update;
   }
@@ -28,6 +28,7 @@ const dumpAnalyticEventsToMongo = async (url, token, start, end) => {
   console.log("Insert GateWay Token: " + insertGatewayTokenCount);
   console.log("Update GateWay Token: " + updateGatewayTokenCount);
   mongoDisconnect();
+  return [COLLECTION_ANALYTIC_EVENT(start+'-'+end), COLLECTION_GATEWAY_TOKEN_AGGREGATE(start+'-'+end)]
 }
 
 async function populateAnalyticEvent(db, event, collection='analytic_events') {
